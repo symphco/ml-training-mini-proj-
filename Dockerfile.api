@@ -1,0 +1,23 @@
+FROM node:16-alpine as BUILD
+
+WORKDIR /workspace/app
+
+COPY *.json ./
+RUN npm install
+
+COPY ./ ./
+RUN npx nx build api --prod
+
+
+FROM node:16-alpine as DEPLOY
+
+COPY --from=BUILD /workspace/app/dist/apps/api /app
+WORKDIR /app
+
+RUN npm install
+RUN npm install --global pm2
+
+ENV PORT 8080
+EXPOSE $PORT
+
+CMD ["pm2-runtime", "npm", "--", "start"]
